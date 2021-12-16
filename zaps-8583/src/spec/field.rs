@@ -32,7 +32,7 @@ impl FromStr for DataType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s.to_ascii_lowercase()[..] {
             "alpha" | "a" => Ok(DataType::Alpha),
-            "Alphanum" | "Alphanumeric" | "an" => Ok(DataType::Alphanum),
+            "alphanum" | "alphanumeric" | "an" => Ok(DataType::Alphanum),
             "bin" | "binary" | "bit" | "bitmap" => Ok(DataType::Binary),
             "hex" | "hexadecimal" | "h" => Ok(DataType::Hex),
             "numeric" | "n" => Ok(DataType::Numeric),
