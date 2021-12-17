@@ -117,24 +117,24 @@ impl FromStr for Field {
     type Err = FieldParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (s_ftype, rest) = s.split_once("(")
+        let (s_ftype, rest) = s.split_once('(')
             .ok_or_else(|| FieldParseError::InvalidFormat(s.to_string()))?;
 
         let ftype = s_ftype.parse::<FieldType>()?;
 
-        let (internal, junk_trail) = rest.split_once(")")
+        let (internal, junk_trail) = rest.split_once(')')
             .ok_or_else(|| FieldParseError::InvalidFormat(s.to_string()))?;
 
         let (s_size, s_data_type) = match ftype {
             FieldType::AsciiBitmap => {
-                if internal.contains(":") {
+                if internal.contains(':') {
                     Err(FieldParseError::InvalidFormat(s.to_string()))
                 } else {
                     Ok((internal, "packed"))
                 }?
             },
             FieldType::Bitmap => {
-                if internal.contains(":") {
+                if internal.contains(':') {
                     Err(FieldParseError::InvalidFormat(s.to_string()))
                 } else {
                     Ok((internal, "binary"))
@@ -143,14 +143,14 @@ impl FromStr for Field {
             FieldType::LVar |
             FieldType::LLVar |
             FieldType::LLLVar => {
-                if internal.contains(":") {
+                if internal.contains(':') {
                     Err(FieldParseError::InvalidFormat(s.to_string()))
                 } else {
                     Ok(("0", internal))
                 }?
             },
             _ => {
-                internal.split_once(":")
+                internal.split_once(':')
                     .ok_or_else(|| FieldParseError::InvalidFormat(s.to_string()))?
             }
         };
@@ -161,7 +161,7 @@ impl FromStr for Field {
 
         let data_type = s_data_type.parse::<DataType>()?;
 
-        if junk_trail.len() > 0 {
+        if !junk_trail.is_empty() {
             return Err(FieldParseError::JunkTrail(junk_trail.to_string()));
         }
 

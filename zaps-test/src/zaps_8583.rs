@@ -36,7 +36,7 @@ mod tests {
                 5: AsciiBitmap, 64;
         };
 
-        let spec_0200 = spec.get_mti_spec(&"0200".into()).unwrap();
+        let spec_0200 = spec.get_mti_spec(&"0200").unwrap();
         assert_spec_has_field!(spec_0200:
             1: LLLVar 0 Alphanum,
             2: LLVar 0 Alphanum,
@@ -46,7 +46,7 @@ mod tests {
             64: Fixed 16 Hex,
         );
 
-        let spec_0210 = spec.get_mti_spec(&"0210".into()).unwrap();
+        let spec_0210 = spec.get_mti_spec(&"0210").unwrap();
         assert_spec_has_field!(spec_0210:
             1: LLLVar 0 Numeric,
             2: LLVar 0 Packed,

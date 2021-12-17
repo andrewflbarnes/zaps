@@ -30,11 +30,17 @@ impl Spec {
         &self.message_specs
     }
 
-    pub fn has_mti_spec(&self, mti: &String) -> bool {
+    pub fn has_mti_spec(&self, mti: &str) -> bool {
         self.message_specs.contains_key(mti)
     }
 
-    pub fn get_mti_spec(&self, mti: &String) -> Option<&HashMap<u16, Field>> {
+    pub fn get_mti_spec(&self, mti: &str) -> Option<&HashMap<u16, Field>> {
         self.message_specs.get(mti)
+    }
+}
+
+impl Default for Spec {
+    fn default() -> Self {
+        Self::new()
     }
 }

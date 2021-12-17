@@ -55,10 +55,10 @@ async fn main() {
                         if result.unwrap() == 0 {
                             break;
                         }
-                        line = line.trim_end_matches("\n").into();
+                        line = line.trim_end_matches('\n').into();
                         if line.starts_with("iso8583:") {
                             line = line.trim_start_matches("iso8583:").into();
-                            line = match thread_engine.tokenise(&line[..].as_bytes()) {
+                            line = match thread_engine.tokenise(line[..].as_bytes()) {
                                 Ok(tokens) => format!("{:?}", tokens),
                                 Err(e) => format!("{:?}", e),
                             };

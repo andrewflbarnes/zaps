@@ -51,10 +51,10 @@ impl Tokeniser for Iso8583Engine {
             .collect::<String>();
 
         let mti_spec = self.spec.get_mti_spec(&mti)
-            .ok_or_else(|| Iso8583TokeniseError::NoMtiDefinition(mti.into()))?;
+            .ok_or(Iso8583TokeniseError::NoMtiDefinition(mti))?;
 
         let mti_pri_bitmap = mti_spec.get(&0)
-            .ok_or_else(|| Iso8583TokeniseError::NoTokenDefinition(0))?;
+            .ok_or(Iso8583TokeniseError::NoTokenDefinition(0))?;
 
         let pri_bitmap = as_bitmap(payload, &mut pointer, mti_pri_bitmap.size, &mti_pri_bitmap.data_type);
 

@@ -28,8 +28,7 @@ pub fn decode_ascii_bitmap(raw_bitmap: &[u8], size: usize) -> u64 {
 
 pub fn decode_bitmap(raw_bitmap: &[u8], size: usize) -> u64 {
     let mut bitmap = 0u64;
-    for i in 0..size {
-        let byte = raw_bitmap[i];
+    for (i, byte) in raw_bitmap.iter().enumerate().take(size) {
         for j in 0..8 {
             let bit = 7 - j;
             if 1 & (byte >> bit) == 1 {
