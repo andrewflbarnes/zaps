@@ -1,33 +1,43 @@
-use crate::core::DataType;
+use hex::FromHexError;
+use std::convert::From;
 
-pub fn as_bitmap(payload: &[u8], pointer: &mut usize, size: usize, data_type: &DataType) -> u64 {
-    let raw_bitmap = &payload[*pointer..(*pointer + size)];
+#[derive(Debug)]
+pub enum DecodeBitmapError {
+    InvalidChar{
+        c: char, index: usize,
+    },
+    InvalidStringLength,
+    OddLength,
+}
 
-    *pointer += size;
-
-    match data_type {
-        DataType::Binary => {
-            decode_bitmap(raw_bitmap, size)
-        },
-        DataType::Packed => {
-            decode_ascii_bitmap(raw_bitmap, size)
-        },
-        _ => {
-            todo!();
+impl From<FromHexError> for DecodeBitmapError {
+    fn from(hex_error: FromHexError) -> Self {
+        match hex_error {
+            FromHexError::InvalidHexCharacter{ c, index } => DecodeBitmapError::InvalidChar{c, index},
+            FromHexError::InvalidStringLength => DecodeBitmapError::InvalidStringLength,
+            FromHexError::OddLength => DecodeBitmapError::OddLength,
         }
     }
 }
 
-pub fn decode_ascii_bitmap(raw_bitmap: &[u8], size: usize) -> u64 {
+pub fn decode_ascii_bitmap(raw_bitmap: &[u8], size: usize) -> Result<u64, DecodeBitmapError> {
     let mut decoded = vec![0u8; size / 2];
-    hex::decode_to_slice(raw_bitmap, &mut decoded as &mut [u8])
-        .expect(&format!("Unable to decode bitmap: {:?}", raw_bitmap));
+    hex::decode_to_slice(raw_bitmap, &mut decoded as &mut [u8])?;
 
     decode_bitmap(&decoded, size / 2)
 }
 
-pub fn decode_bitmap(raw_bitmap: &[u8], size: usize) -> u64 {
+pub fn decode_bitmap(raw_bitmap: &[u8], size: usize) -> Result<u64, DecodeBitmapError> {
     let mut bitmap = 0u64;
+
+    if raw_bitmap.len() < size {
+        return Err(DecodeBitmapError::InvalidStringLength);
+    }
+
+    if raw_bitmap.len() % 2 == 1 {
+        return Err(DecodeBitmapError::OddLength);
+    }
+
     for (i, byte) in raw_bitmap.iter().enumerate().take(size) {
         for j in 0..8 {
             let bit = 7 - j;
@@ -37,7 +47,7 @@ pub fn decode_bitmap(raw_bitmap: &[u8], size: usize) -> u64 {
             }
         }
     }
-    bitmap
+    Ok(bitmap)
 }
 
 #[cfg(test)]
@@ -50,7 +60,7 @@ mod test {
     #[test]
     fn test_ascii_bitmap() {
         let raw_bitmap = "8080000000400001".as_bytes();
-        let bitmap = decode_ascii_bitmap(&raw_bitmap, raw_bitmap.len());
+        let bitmap = decode_ascii_bitmap(&raw_bitmap, raw_bitmap.len()).unwrap();
 
         for i in 0..64 {
             let bitpos = 63 - i;
@@ -67,7 +77,7 @@ mod test {
         let raw_bitmap = [
             0x80, 0x80, 0x00, 0x00, 0x00, 0x40, 0x00, 0x01,
         ];
-        let bitmap = decode_bitmap(&raw_bitmap, raw_bitmap.len());
+        let bitmap = decode_bitmap(&raw_bitmap, raw_bitmap.len()).unwrap();
 
         for i in 0..64 {
             let bitpos = 63 - i;

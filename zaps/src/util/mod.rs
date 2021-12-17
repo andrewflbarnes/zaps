@@ -2,9 +2,9 @@ mod bitmap;
 mod bytes;
 
 pub use bitmap::{
-    as_bitmap,
     decode_ascii_bitmap,
     decode_bitmap,
+    DecodeBitmapError,
 };
 
 pub use bytes::{
