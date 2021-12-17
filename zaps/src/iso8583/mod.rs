@@ -2,7 +2,10 @@ extern crate hex;
 use std::collections::HashMap;
 use std::str;
 use crate::{
-    util::as_bitmap,
+    util::{
+        as_bitmap,
+        byte_to_string,
+    },
     core::{
         Field,
         Spec,
@@ -44,7 +47,7 @@ impl Tokeniser for Iso8583Engine {
     fn tokenise(&self, payload: &[u8]) -> Result<std::collections::HashMap<u16, String>, Iso8583TokeniseError> {
         let mut pointer = 0;
         let mut tokens = HashMap::new();
-        let mti = tokenise_next(payload, &mut pointer, 4).iter()
+        let mti = tokenise_next_bytes(payload, &mut pointer, 4).iter()
             .map(|b| *b as char)
             .collect::<String>();
 
@@ -62,25 +65,7 @@ impl Tokeniser for Iso8583Engine {
         for i in 1..=64 {
             let bitpos = i - 1;
             if 1 & (pri_bitmap >> (63 - bitpos)) == 1 {
-                let field = mti_spec.get(&i).unwrap();
-                
-                let field_size = match field.ftype.var_size_len() {
-                    Some(field_size_len) => {
-                        // TODO make this nicer, maybe use hex crate
-                        let field_size_str = tokenise_next(payload, &mut pointer, field_size_len);
-                        str::from_utf8(field_size_str)
-                            .expect(&format!("Unable to convert {:?} to string", field_size_str))
-                            .parse::<usize>()
-                            .unwrap()
-                    }
-                    None => field.size,
-                };
-
-                let field_value_raw = tokenise_next(payload, &mut pointer, field_size);
-                //TODO string bad....?
-                let field_value = str::from_utf8(field_value_raw)
-                    .expect(&format!("Unable to convert {:?} to string", field_value_raw))
-                    .to_string();
+                let field_value = tokenise_next(payload, &mut pointer, mti_spec, &i)?;
 
                 tokens.insert(i, field_value);
                 
@@ -93,7 +78,30 @@ impl Tokeniser for Iso8583Engine {
     }
 }
 
-fn tokenise_next<'a>(payload: &'a[u8], pointer: &mut usize, size: usize) -> &'a [u8] {
+fn tokenise_next(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u16, Field>, field_num: &u16) -> Result<String, Iso8583TokeniseError> {
+    let field = mti_spec.get(field_num).unwrap();
+    
+    let field_size = match field.ftype.var_size_len() {
+        Some(field_size_len) => {
+            let field_size_str = tokenise_next_bytes(payload, pointer, field_size_len);
+            str::from_utf8(field_size_str)
+                .map_err(|_err| Iso8583TokeniseError::InvalidData(*field_num, Vec::from(field_size_str)))?
+                .parse::<usize>()
+                .map_err(|_err| Iso8583TokeniseError::InvalidVarLength(*field_num, byte_to_string(field_size_str)))?
+        }
+        None => field.size,
+    };
+
+    let field_value_raw = tokenise_next_bytes(payload, pointer, field_size);
+    let field_value = str::from_utf8(field_value_raw)
+        .map_err(|_err| Iso8583TokeniseError::InvalidData(*field_num, Vec::from(field_value_raw)))?
+        .to_string();
+
+    Ok(field_value)
+
+}
+
+fn tokenise_next_bytes<'a>(payload: &'a[u8], pointer: &mut usize, size: usize) -> &'a [u8] {
     let result = &payload[*pointer..(*pointer + size)];
 
     *pointer += size;
