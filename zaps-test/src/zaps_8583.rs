@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use zaps::{Iso8583Engine, Tokeniser};
+    use zaps::{
+        iso8583::Iso8583Engine,
+        core::Tokeniser,
+    };
 
 
     macro_rules! assert_spec_has_field {

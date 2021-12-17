@@ -6,7 +6,7 @@ use tokio::{
     sync::broadcast,
 };
 
-use zaps::Field;
+use zaps::core::Field;
 
 #[tokio::main]
 async fn main() {

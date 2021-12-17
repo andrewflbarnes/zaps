@@ -1,21 +1,21 @@
 #[macro_use]
-pub mod spec;
-pub mod engine;
-pub mod parse;
+mod spec;
+mod parse;
 
-pub use crate::{
-    engine::{
-        Iso8583Engine,
-        Iso8583TokeniseError,
-    },
-    parse::{
-        Tokeniser,
-    },
-    spec::{
-        DataType,
-        Field,
-        FieldParseError,
-        FieldType,
-        Spec,
-    },
-};
+pub mod util;
+pub mod iso8583;
+
+pub mod core {
+    pub use crate::{
+        parse::{
+            Tokeniser,
+        },
+        spec::{
+            DataType,
+            Field,
+            FieldParseError,
+            FieldType,
+            Spec,
+        },
+    };
+}

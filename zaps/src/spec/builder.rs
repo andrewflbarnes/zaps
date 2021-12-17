@@ -4,10 +4,12 @@ macro_rules! iso8583_use {
 use zaps::{
     iso8583_spec_build,
     iso8583_field_build,
-    Field,
-    FieldType,
-    DataType,
-    Spec,
+    core::{
+        Field,
+        FieldType,
+        DataType,
+        Spec,
+    },
 };
     };
 }
@@ -72,10 +74,12 @@ mod test {
     use crate::{
         iso8583_spec_build,
         iso8583_field_build,
-        Field,
-        FieldType,
-        DataType,
-        Spec,
+        core::{
+            Field,
+            FieldType,
+            DataType,
+            Spec,
+        }
     };
 
     #[test]
