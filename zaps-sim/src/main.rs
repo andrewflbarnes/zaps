@@ -1,4 +1,5 @@
 // Shamefule theft from Lily Mara/Code Tech as a baseline - https://www.youtube.com/watch?v=Iapc-qGTEBQ
+use std::sync::Arc;
 
 use tokio::{
     io::{AsyncBufReadExt, BufReader, AsyncWriteExt},
@@ -6,10 +7,25 @@ use tokio::{
     sync::broadcast,
 };
 
-use zaps::core::Field;
+use zaps::{
+    iso8583_use,
+    core::Tokeniser,
+    iso8583::Iso8583Engine,
+};
+
+iso8583_use!();
 
 #[tokio::main]
 async fn main() {
+    let spec = iso8583_spec_build!(
+        "0200":
+            0: AsciiBitmap, 8;
+            1: LLLVar, Alpha;
+            8: Fixed, 15, Alphanum;
+    );
+    // try sending "iso8583:020081003ABC0123456789abcde" or similar
+    let engine = Arc::new(Iso8583Engine::new(spec));
+
     let listen_addr = "localhost:9090";
     let listener = TcpListener::bind(listen_addr)
         .await
@@ -26,6 +42,7 @@ async fn main() {
 
         let tx = tx.clone();
         let mut rx = tx.subscribe();
+        let thread_engine = engine.clone();
 
         tokio::spawn(async move {
             let (reader, mut writer) = socket.split();
@@ -38,14 +55,15 @@ async fn main() {
                         if result.unwrap() == 0 {
                             break;
                         }
-                        let send = match line.clone().trim_end_matches("\n").parse::<Field>() {
-                            Err(e) => {
-                                eprintln!("{:?}", e);
-                                line.clone()
-                            },
-                            Ok(field) => field.to_string(),
-                        };
-                        tx.send((send, addr)).unwrap();
+                        line = line.trim_end_matches("\n").into();
+                        if line.starts_with("iso8583:") {
+                            line = line.trim_start_matches("iso8583:").into();
+                            line = match thread_engine.tokenise(&line[..].as_bytes()) {
+                                Ok(tokens) => format!("{:?}", tokens),
+                                Err(e) => format!("{:?}", e),
+                            };
+                        }
+                        tx.send((line.clone() + "\n", addr)).unwrap();
                     }
                     result = rx.recv() => {
                         let (msg, recv_addr)  = result.unwrap();

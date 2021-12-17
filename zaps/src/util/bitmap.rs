@@ -19,7 +19,7 @@ pub fn as_bitmap(payload: &[u8], pointer: &mut usize, size: usize, data_type: &D
 }
 
 pub fn decode_ascii_bitmap(raw_bitmap: &[u8], size: usize) -> u64 {
-    let mut decoded = [0u8; 8];
+    let mut decoded = vec![0u8; size / 2];
     hex::decode_to_slice(raw_bitmap, &mut decoded as &mut [u8])
         .expect(&format!("Unable to decode bitmap: {:?}", raw_bitmap));
 
