@@ -13,7 +13,6 @@ use crate::{
     },
 };
 
-
 #[derive(Debug)]
 pub enum Iso8583TokeniseError {
     EndOfData{
@@ -51,7 +50,6 @@ impl Tokeniser for Iso8583Engine {
             .map(|b| *b as char)
             .collect::<String>();
 
-        // println!("{}", mti);
         let mti_spec = self.spec.get_mti_spec(&mti)
             .ok_or_else(|| Iso8583TokeniseError::NoMtiDefinition(mti.into()))?;
 
@@ -59,8 +57,6 @@ impl Tokeniser for Iso8583Engine {
             .ok_or_else(|| Iso8583TokeniseError::NoTokenDefinition(0))?;
 
         let pri_bitmap = as_bitmap(payload, &mut pointer, mti_pri_bitmap.size, &mti_pri_bitmap.data_type);
-
-        // println!("{:b}", pri_bitmap);
 
         for i in 1..=64 {
             let bitpos = i - 1;
@@ -72,14 +68,13 @@ impl Tokeniser for Iso8583Engine {
             }
         }
 
-        // TODO validate field
-
         Ok(tokens)
     }
 }
 
 fn tokenise_next(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u16, Field>, field_num: &u16) -> Result<String, Iso8583TokeniseError> {
-    let field = mti_spec.get(field_num).unwrap();
+    let field = mti_spec.get(field_num)
+        .ok_or_else(|| Iso8583TokeniseError::NoTokenDefinition(*field_num))?;
     
     let field_size = match field.ftype.var_size_len() {
         Some(field_size_len) => {
