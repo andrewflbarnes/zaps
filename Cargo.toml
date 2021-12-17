@@ -2,6 +2,6 @@
 
 members = [
     "zaps",
-    "zaps-8583",
     "zaps-test",
+    "zaps-sim",
 ]

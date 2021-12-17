@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! iso8583_use {
     () => {
-use zaps_8583::{
+use zaps::{
     iso8583_spec_build,
     iso8583_field_build,
     Field,
@@ -49,13 +49,13 @@ macro_rules! iso8583_spec_build {
     }};
     // new MTI block
     (@build $spec:ident $mti:literal => $mti_spec:ident $next_mti:literal: $($rest:tt)*) => {{
-        $spec.add_spec($mti.to_string(), $mti_spec);
+        $spec.add_mti_spec($mti.to_string(), $mti_spec);
         let mut mti_spec: std::collections::HashMap<u16, Field> = std::collections::HashMap::new();
         iso8583_spec_build!(@build $spec $next_mti => mti_spec $($rest)*);
     }};
     // exitpoint
     (@build $spec:ident $mti:literal => $mti_spec:ident) => {{
-        $spec.add_spec($mti.to_string(), $mti_spec);
+        $spec.add_mti_spec($mti.to_string(), $mti_spec);
     }};
     // entrypoint
     ($first_mti:literal: $($rest:tt)*) => {{

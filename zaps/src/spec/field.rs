@@ -52,6 +52,17 @@ pub enum FieldType {
     AsciiBitmap,
 }
 
+impl FieldType {
+    pub fn var_size_len(&self) -> Option<usize> {
+        match self {
+            FieldType::LLLVar => Some(3),
+            FieldType::LLVar => Some(2),
+            FieldType::LVar => Some(1),
+            _ => None,
+        }
+    }
+}
+
 impl fmt::Display for FieldType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(self, f)
@@ -76,13 +87,13 @@ impl FromStr for FieldType {
 
 #[derive(Debug, PartialEq)]
 pub struct Field {
-    ftype: FieldType,
-    size: u16,
-    data_type: DataType,
+    pub ftype: FieldType,
+    pub size: usize,
+    pub data_type: DataType,
 }
 
 impl Field {
-    pub fn new(ftype: FieldType, raw_size: u16, data_type: DataType) -> Self {
+    pub fn new(ftype: FieldType, raw_size: usize, data_type: DataType) -> Self {
         let size = match ftype {
             FieldType::AsciiBitmap => (raw_size + 3) / 4,
             FieldType::Bitmap => (raw_size + 7) / 8,
@@ -144,7 +155,7 @@ impl FromStr for Field {
             }
         };
 
-        let size = s_size.parse::<u16>()
+        let size = s_size.parse::<usize>()
             .map_err(|_e| FieldParseError::InvalidLength(s_size.to_string()))?;
         
 
