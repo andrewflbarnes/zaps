@@ -1,5 +1,7 @@
 use hex::FromHexError;
 use std::convert::From;
+use std::error;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum DecodeBitmapError {
@@ -9,6 +11,18 @@ pub enum DecodeBitmapError {
     InvalidStringLength,
     OddLength,
 }
+
+impl fmt::Display for DecodeBitmapError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidChar{ c, index } => write!(f, "invalid char {} at index {} for bitmap", c, index),
+            Self::InvalidStringLength => write!(f, "invalid string length for bitmap"),
+            Self::OddLength => write!(f, "odd string length not allowed for bitmap"),
+        }
+    }
+}
+
+impl error::Error for DecodeBitmapError {}
 
 impl From<FromHexError> for DecodeBitmapError {
     fn from(hex_error: FromHexError) -> Self {

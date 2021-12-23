@@ -1,6 +1,8 @@
 extern crate hex;
 use std::collections::HashMap;
 use std::convert::From;
+use std::error;
+use std::fmt;
 use std::str;
 use crate::{
     util::{
@@ -19,7 +21,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum Iso8583TokeniseError {
-    EndOfData{
+    Overflow{
         from: usize,
         count: usize,
         max: usize,
@@ -30,6 +32,29 @@ pub enum Iso8583TokeniseError {
     NoMtiDefinition,
     InvalidFieldDefinition,
     BadBitmap(DecodeBitmapError),
+}
+
+impl fmt::Display for Iso8583TokeniseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Overflow{ from, count, max } => write!(f, "overflow reading from {} by {}, max {}", from, count, max),
+            Self::InvalidVarLength(len) => write!(f, "invalid variable length: {}", len),
+            Self::InvalidData(data) => write!(f, "invalid data read {:?}", data),
+            Self::NoTokenDefinition => write!(f, "no token definition found"),
+            Self::NoMtiDefinition => write!(f, "no MTI definition found"),
+            Self::InvalidFieldDefinition => write!(f, "invalid field definition"),
+            Self::BadBitmap(_bitmap_err) => write!(f, "invalid bitmap"),
+        }
+    }
+}
+
+impl error::Error for Iso8583TokeniseError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Self::BadBitmap(bitmap_err) => Some(bitmap_err),
+            _ => None
+        }
+    }
 }
 
 impl From<DecodeBitmapError> for Iso8583TokeniseError {
@@ -89,19 +114,19 @@ fn tokenise_next_bitmap(payload: &[u8], pointer: &mut usize, bitmap_defn: &Field
     let raw_bitmap = tokenise_next_bytes(payload, pointer, *size)?;
 
 
-    match data_type {
+    let bitmap = match data_type {
         DataType::Binary => {
-            decode_bitmap(raw_bitmap, *size)
-                .map_err(|e| e.into())
+            decode_bitmap(raw_bitmap, *size)?
         },
         DataType::Packed => {
-            decode_ascii_bitmap(raw_bitmap, *size)
-                .map_err(|e| e.into())
+            decode_ascii_bitmap(raw_bitmap, *size)?
         },
         _ => {
-            Err(Iso8583TokeniseError::InvalidFieldDefinition)
+            return Err(Iso8583TokeniseError::InvalidFieldDefinition)
         }
-    }
+    };
+
+    Ok(bitmap)
 }
 
 fn tokenise_next_field(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u16, Field>, field_num: &u16) -> Result<String, Iso8583TokeniseError> {
@@ -121,7 +146,7 @@ fn tokenise_next_field(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u
 
 fn tokenise_next_bytes<'a>(payload: &'a[u8], pointer: &mut usize, size: usize) -> Result<&'a [u8], Iso8583TokeniseError> {
     if *pointer + size > payload.len() {
-        return Err(Iso8583TokeniseError::EndOfData{
+        return Err(Iso8583TokeniseError::Overflow{
             from: *pointer,
             count: size,
             max: payload.len(),
