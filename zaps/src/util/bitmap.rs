@@ -3,7 +3,7 @@ use std::convert::From;
 use std::error;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DecodeBitmapError {
     InvalidChar{
         c: char, index: usize,

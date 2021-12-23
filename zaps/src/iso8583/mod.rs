@@ -19,7 +19,7 @@ use crate::{
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Iso8583TokeniseError {
     Overflow{
         from: usize,
@@ -185,6 +185,7 @@ mod test {
     use super::{
         get_field_length,
         tokenise_next_bytes,
+        Iso8583TokeniseError,
     };
 
     macro_rules! test_get_field_length {
@@ -214,29 +215,66 @@ mod test {
         fixed_field_len: "ZZZZZZZZZZ" Fixed 15 => len:15 pointer:0;
     );
 
-    macro_rules! test_tokenise_next_bytes {
-        ($(
-            $name:ident:
-            $payload:literal $size:literal
-            =>
-            $expected:literal;
-        )*) => {
-            $(
-                #[test]
-                fn $name() {
-                    let mut pointer = 0;
-                    let result = tokenise_next_bytes($payload.as_bytes(), &mut pointer, $size).unwrap();
-                    assert_eq!($expected.as_bytes(), result);
-                    assert_eq!($size, pointer);
-                }
-            )*
-        };
+    mod tokenise_next_bytes {
+        use super::*;
+
+        const PAYLOAD: &'static str = "1234567890abcdeffedbca0987654321";
+        const PAYLOAD_EMPTY: &'static str = "";
+
+        macro_rules! test_tokenise_next_bytes {
+            ($(
+                $name:ident:
+                $payload:ident $from:literal $size:literal
+                =>
+                $expected:literal;
+            )*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let mut pointer = $from;
+                        let result = tokenise_next_bytes($payload.as_bytes(), &mut pointer, $size).unwrap();
+                        assert_eq!($expected.as_bytes(), result);
+                        assert_eq!($size + $from, pointer);
+                    }
+                )*
+            };
+        }
+
+        test_tokenise_next_bytes!(
+            no_length: PAYLOAD 0 0 => "";
+            no_length_from: PAYLOAD 10 0 => "";
+            no_length_empty: PAYLOAD_EMPTY 0 0 => "";
+            some_length: PAYLOAD 0 10 => "1234567890";
+            some_length_from: PAYLOAD 6 10 => "7890abcdef";
+        );
+
+        macro_rules! test_tokenise_next_bytes_overflow {
+            ($(
+                $name:ident:
+                $payload:ident $from:literal $size:literal;
+            )*) => {
+                $(
+                    #[test]
+                    fn $name() {
+                        let mut pointer = $from;
+                        let result = tokenise_next_bytes($payload.as_bytes(), &mut pointer, $size);
+                        assert_eq!(Err(Iso8583TokeniseError::Overflow{
+                            from: $from,
+                            count: $size,
+                            max: $payload.len(),
+                        }), result);
+                    }
+                )*
+            };
+        }
+
+        test_tokenise_next_bytes_overflow!(
+            overflow_by_many: PAYLOAD 0 100;
+            overflow_by_one: PAYLOAD 0 33;
+            overflow_end_by_many: PAYLOAD 32 100;
+            overflow_end_by_one: PAYLOAD 32 1;
+            overflow_empty_by_many: PAYLOAD_EMPTY 0 100;
+            overflow_empty_by_one: PAYLOAD_EMPTY 0 1;
+        );
     }
-
-    test_tokenise_next_bytes!(
-        no_length: "1234567890abcdef" 0 => "";
-        some_length: "1234567890abcdef" 10 => "1234567890";
-
-        // TODO over_length: "1234567890abcdef" 17 => "0123456789";
-    );
 }
