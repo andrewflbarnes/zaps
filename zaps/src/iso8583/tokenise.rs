@@ -68,7 +68,6 @@ pub fn tokenise_next_bitmap(payload: &[u8], pointer: &mut usize, bitmap_defn: &F
 
     let raw_bitmap = tokenise_next_bytes(payload, pointer, *size)?;
 
-
     let bitmap = match data_type {
         DataType::Binary => {
             decode_bitmap(raw_bitmap, *size)?
