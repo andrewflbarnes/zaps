@@ -11,7 +11,7 @@ use crate::{
         decode_bitmap,
         DecodeBitmapError,
     },
-    core::{
+    iso8583::{
         DataType,
         Field,
     }
@@ -132,16 +132,8 @@ fn get_field_length(payload: &[u8], pointer: &mut usize, field: &Field) -> Resul
 
 #[cfg(test)]
 mod test {
-    use crate::core::{
-        DataType,
-        Field,
-        FieldType,
-    };
-    use super::{
-        get_field_length,
-        tokenise_next_bytes,
-        Iso8583TokeniseError,
-    };
+    use super::*;
+    use crate::iso8583::FieldType;
 
     mod get_field_length {
         use super::*;

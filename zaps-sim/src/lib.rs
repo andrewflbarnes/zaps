@@ -8,11 +8,12 @@ use tokio::{
 };
 
 use zaps::{
-    iso8583_use,
+    iso8583_spec_build,
+    iso8583::{
+        Spec,
+    },
     core::Tokeniser,
 };
-
-iso8583_use!();
 
 pub fn iso8583_spec() -> Spec {
     iso8583_spec_build!(

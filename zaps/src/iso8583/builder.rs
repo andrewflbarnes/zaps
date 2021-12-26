@@ -1,25 +1,18 @@
 #[macro_export]
-macro_rules! iso8583_use {
-    () => {
-use zaps::{
-    iso8583_spec_build,
-    iso8583_field_build,
-    core::{
-        Field,
-        FieldType,
-        DataType,
-        Spec,
-    },
-};
-    };
-}
-
-#[macro_export]
 macro_rules! iso8583_field_build {
     ($field_type:ident $field_size:literal $field_data:ident) => {{
+        use $crate::iso8583::{
+            DataType,
+        };
+
         iso8583_field_build!($field_type $field_size DataType::$field_data)
     }};
     ($field_type:ident $field_size:literal $field_data:path) => {{
+        use $crate::iso8583::{
+            Field,
+            FieldType,
+        };
+
         Field::new(FieldType::$field_type, $field_size, $field_data)
     }};
 }
@@ -28,18 +21,28 @@ macro_rules! iso8583_field_build {
 macro_rules! iso8583_spec_build {
     // fully defined field
     (@build $spec:ident $mti:literal => $mti_spec:ident $field_num:literal: $field_type:ident, $field_size:literal, $field_data:ident; $($rest:tt)*) => {{
+        use $crate::iso8583_field_build;
+
         let field = iso8583_field_build!($field_type $field_size $field_data);
         $mti_spec.insert($field_num, field);
         iso8583_spec_build!(@build $spec $mti => $mti_spec $($rest)*);
     }};
     // variable length field (LLVar, etc.)
     (@build $spec:ident $mti:literal => $mti_spec:ident $field_num:literal: $field_type:ident, $field_data:ident; $($rest:tt)*) => {{
+        use $crate::iso8583_field_build;
+
         let field = iso8583_field_build!($field_type 0 $field_data);
         $mti_spec.insert($field_num, field);
         iso8583_spec_build!(@build $spec $mti => $mti_spec $($rest)*);
     }};
     // data specific field (LLVar, etc.)
     (@build $spec:ident $mti:literal => $mti_spec:ident $field_num:literal: $field_type:ident, $field_size:literal; $($rest:tt)*) => {{
+        use $crate::iso8583::{
+            DataType,
+            Field,
+            FieldType,
+        };
+
         let field_data = match FieldType::$field_type {
             FieldType::Bitmap => DataType::Binary,
             FieldType::AsciiBitmap => DataType::Packed,
@@ -51,8 +54,10 @@ macro_rules! iso8583_spec_build {
     }};
     // new MTI block
     (@build $spec:ident $mti:literal => $mti_spec:ident $next_mti:literal: $($rest:tt)*) => {{
+        use std::collections::HashMap;
+
         $spec.add_mti_spec($mti.to_string(), $mti_spec);
-        let mut mti_spec: std::collections::HashMap<u16, Field> = std::collections::HashMap::new();
+        let mut mti_spec: HashMap<u16, Field> = HashMap::new();
         iso8583_spec_build!(@build $spec $next_mti => mti_spec $($rest)*);
     }};
     // exitpoint
@@ -61,8 +66,14 @@ macro_rules! iso8583_spec_build {
     }};
     // entrypoint
     ($first_mti:literal: $($rest:tt)*) => {{
+        use $crate::iso8583::{
+            Field,
+            Spec,
+        };
+        use std::collections::HashMap;
+
         let mut spec = Spec::new();
-        let mut mti_spec: std::collections::HashMap<u16, Field> = std::collections::HashMap::new();
+        let mut mti_spec: HashMap<u16, Field> = HashMap::new();
         iso8583_spec_build!(@build spec $first_mti => mti_spec $($rest)*);
         spec
     }};
@@ -74,12 +85,6 @@ mod test {
     use crate::{
         iso8583_spec_build,
         iso8583_field_build,
-        core::{
-            Field,
-            FieldType,
-            DataType,
-            Spec,
-        }
     };
 
     #[test]

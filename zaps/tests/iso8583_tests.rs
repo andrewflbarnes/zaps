@@ -1,6 +1,12 @@
 use zaps::{
     core::Tokeniser,
-    iso8583::Iso8583Engine,
+    iso8583::{
+        DataType,
+        Field,
+        FieldType,
+        Iso8583Engine,
+    },
+    iso8583_spec_build,
 };
 
 macro_rules! assert_spec_has_field {
@@ -14,7 +20,6 @@ macro_rules! assert_spec_has_field {
 
 #[test]
 fn it_works() {
-    zaps::iso8583_use!();
     let spec = iso8583_spec_build!{
         "0200":
             0: Bitmap, 64;

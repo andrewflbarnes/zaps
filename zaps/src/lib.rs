@@ -1,5 +1,3 @@
-#[macro_use]
-mod spec;
 mod parse;
 
 pub mod util;
@@ -9,13 +7,6 @@ pub mod core {
     pub use crate::{
         parse::{
             Tokeniser,
-        },
-        spec::{
-            DataType,
-            Field,
-            FieldParseError,
-            FieldType,
-            Spec,
         },
     };
 }
