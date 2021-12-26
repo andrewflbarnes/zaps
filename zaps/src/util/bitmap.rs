@@ -91,11 +91,10 @@ mod test {
     use super::{
         decode_ascii_bitmap,
         decode_bitmap,
+        DecodeBitmapError,
     };
 
     mod decode_ascii_bitmap {
-        use crate::util::DecodeBitmapError;
-
         use super::*;
 
         #[test]
@@ -158,8 +157,6 @@ mod test {
     }
 
     mod decode_bitmap {
-        use crate::util::DecodeBitmapError;
-
         use super::*;
 
         #[test]
