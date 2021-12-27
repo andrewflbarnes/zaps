@@ -8,19 +8,8 @@ use tokio::{
 };
 
 use zaps::{
-    iso8583_spec_build,
-    iso8583::spec::Spec,
     core::Parser,
 };
-
-pub fn iso8583_spec() -> Spec {
-    iso8583_spec_build!(
-        "0200":
-            0: AsciiBitmap, 8;
-            1: LLLVar, Alpha;
-            8: Fixed, 15, Alphanum;
-    )
-}
 
 pub async fn serve<K, T>(engine: T)
 where
@@ -61,7 +50,7 @@ where
                         line = line.trim_end_matches('\n').into();
                         if line.starts_with("iso8583:") {
                             line = line.trim_start_matches("iso8583:").into();
-                            line = match thread_engine.tokenise(line[..].as_bytes()) {
+                            line = match thread_engine.parse(line[..].as_bytes()) {
                                 Ok(tokens) => format!("{:?}", tokens),
                                 Err(e) => format!("{:?}", e),
                             };

@@ -28,7 +28,7 @@ impl Iso8583Engine {
 impl Parser<u16> for Iso8583Engine {
     type Err = Iso8583ParseError;
 
-    fn tokenise(&self, payload: &[u8]) -> Result<std::collections::HashMap<u16, String>, Iso8583ParseError> {
+    fn parse(&self, payload: &[u8]) -> Result<std::collections::HashMap<u16, String>, Iso8583ParseError> {
         let mut pointer = 0;
         let mut tokens = HashMap::new();
         let mti = tokenise_next_bytes(payload, &mut pointer, 4)?

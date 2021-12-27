@@ -61,7 +61,7 @@ fn it_works() {
 
     let engine = Iso8583Engine::new(spec);
 
-    let tokens = engine.tokenise(&[
+    let tokens = engine.parse(&[
         "0200".as_bytes(),
         &[0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01],
         "0100123456789".as_bytes(),
