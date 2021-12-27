@@ -1,14 +1,14 @@
 #[macro_export]
 macro_rules! iso8583_field_build {
     ($field_type:ident $field_size:literal $field_data:ident) => {{
-        use $crate::iso8583::{
+        use $crate::iso8583::spec::{
             DataType,
         };
 
         iso8583_field_build!($field_type $field_size DataType::$field_data)
     }};
     ($field_type:ident $field_size:literal $field_data:path) => {{
-        use $crate::iso8583::{
+        use $crate::iso8583::spec::{
             Field,
             FieldType,
         };
@@ -37,7 +37,7 @@ macro_rules! iso8583_spec_build {
     }};
     // data specific field (LLVar, etc.)
     (@build $spec:ident $mti:literal => $mti_spec:ident $field_num:literal: $field_type:ident, $field_size:literal; $($rest:tt)*) => {{
-        use $crate::iso8583::{
+        use $crate::iso8583::spec::{
             DataType,
             Field,
             FieldType,
@@ -66,7 +66,7 @@ macro_rules! iso8583_spec_build {
     }};
     // entrypoint
     ($first_mti:literal: $($rest:tt)*) => {{
-        use $crate::iso8583::{
+        use $crate::iso8583::spec::{
             Field,
             Spec,
         };

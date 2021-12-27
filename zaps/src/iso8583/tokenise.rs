@@ -11,7 +11,7 @@ use crate::{
         decode_bitmap,
         DecodeBitmapError,
     },
-    iso8583::{
+    iso8583::spec::{
         DataType,
         Field,
     }
@@ -85,7 +85,7 @@ pub fn tokenise_next_bitmap(payload: &[u8], pointer: &mut usize, bitmap_defn: &F
 
 pub fn tokenise_next_field(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u16, Field>, field_num: &u16) -> Result<String, Iso8583TokeniseError> {
     let field = mti_spec.get(field_num)
-        .ok_or_else(|| Iso8583TokeniseError::NoTokenDefinition)?;
+        .ok_or(Iso8583TokeniseError::NoTokenDefinition)?;
     
     let field_size = get_field_length(payload, pointer, field)?;
 
@@ -132,7 +132,7 @@ fn get_field_length(payload: &[u8], pointer: &mut usize, field: &Field) -> Resul
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::iso8583::FieldType;
+    use crate::iso8583::spec::FieldType;
 
     mod get_field_length {
         use super::*;

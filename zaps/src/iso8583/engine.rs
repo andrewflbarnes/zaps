@@ -11,7 +11,7 @@ use crate::{
             tokenise_next_field,
         },
         Iso8583TokeniseError,
-        Spec,
+        spec::Spec,
     }
 };
 

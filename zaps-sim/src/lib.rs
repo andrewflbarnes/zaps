@@ -1,4 +1,4 @@
-// Shamefule theft from Lily Mara/Code Tech as a baseline - https://www.youtube.com/watch?v=Iapc-qGTEBQ
+// Shameful theft from Lily Mara/Code Tech as a baseline - https://www.youtube.com/watch?v=Iapc-qGTEBQ
 use std::sync::Arc;
 
 use tokio::{
@@ -9,9 +9,7 @@ use tokio::{
 
 use zaps::{
     iso8583_spec_build,
-    iso8583::{
-        Spec,
-    },
+    iso8583::spec::Spec,
     core::Tokeniser,
 };
 
@@ -33,7 +31,7 @@ where
     let listen_addr = "localhost:9090";
     let listener = TcpListener::bind(listen_addr)
         .await
-        .expect(&format!("Unable to listen on {}", listen_addr));
+        .unwrap_or_else(|e| panic!("Unable to listen on {}: {}", listen_addr, e));
     
     println!("Listener established for {}", listen_addr);
 

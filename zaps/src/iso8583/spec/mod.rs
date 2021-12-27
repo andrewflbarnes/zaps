@@ -1,7 +1,10 @@
-use std::{collections::HashMap};
-
-use crate::iso8583::{
+use std::collections::HashMap;
+mod definitions;
+pub use definitions::{
+    DataType,
     Field,
+    FieldParseError,
+    FieldType,
 };
 
 #[derive(Debug)]

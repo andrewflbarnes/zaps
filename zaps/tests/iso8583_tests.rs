@@ -1,10 +1,12 @@
 use zaps::{
     core::Tokeniser,
     iso8583::{
-        DataType,
-        Field,
-        FieldType,
         Iso8583Engine,
+        spec::{
+            DataType,
+            Field,
+            FieldType,
+        },
     },
     iso8583_spec_build,
 };
