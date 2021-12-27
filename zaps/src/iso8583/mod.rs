@@ -1,5 +1,4 @@
 extern crate hex;
-pub mod builder;
 mod engine;
 pub use engine::{
     Iso8583Engine,

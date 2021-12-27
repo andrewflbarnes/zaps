@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+pub mod builder;
 mod definitions;
 pub use definitions::{
     DataType,
