@@ -88,6 +88,10 @@ impl FromStr for FieldType {
 #[derive(Debug, PartialEq)]
 pub struct Field {
     pub ftype: FieldType,
+    /// The logical size of the field e.g. for a binary bitmap with 8 bits this would be 8.
+    /// In general size should be preferred.
+    pub raw_size: usize,
+    /// The actual size of a the field e.g. for a binary bitmap with 8 bits this would be 1.
     pub size: usize,
     pub data_type: DataType,
 }
@@ -101,6 +105,7 @@ impl Field {
         };
         Field {
             ftype,
+            raw_size,
             size,
             data_type,
         }
