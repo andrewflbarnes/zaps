@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum Iso8583TokeniseError {
+pub enum Iso8583ParseError {
     Overflow{
         from: usize,
         count: usize,
@@ -32,7 +32,7 @@ pub enum Iso8583TokeniseError {
     BadBitmap(DecodeBitmapError),
 }
 
-impl fmt::Display for Iso8583TokeniseError {
+impl fmt::Display for Iso8583ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Overflow{ from, count, max } => write!(f, "overflow reading from {} by {}, max {}", from, count, max),
@@ -46,7 +46,7 @@ impl fmt::Display for Iso8583TokeniseError {
     }
 }
 
-impl error::Error for Iso8583TokeniseError {
+impl error::Error for Iso8583ParseError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::BadBitmap(bitmap_err) => Some(bitmap_err),
@@ -55,15 +55,13 @@ impl error::Error for Iso8583TokeniseError {
     }
 }
 
-impl From<DecodeBitmapError> for Iso8583TokeniseError {
+impl From<DecodeBitmapError> for Iso8583ParseError {
     fn from(err: DecodeBitmapError) -> Self {
         Self::BadBitmap(err)
     }
 }
 
-
-
-pub fn tokenise_next_bitmap(payload: &[u8], pointer: &mut usize, bitmap_defn: &Field) -> Result<u64, Iso8583TokeniseError> {
+pub fn tokenise_next_bitmap(payload: &[u8], pointer: &mut usize, bitmap_defn: &Field) -> Result<u64, Iso8583ParseError> {
     let Field{ size, data_type, .. } = bitmap_defn;
 
     let raw_bitmap = tokenise_next_bytes(payload, pointer, *size)?;
@@ -76,31 +74,31 @@ pub fn tokenise_next_bitmap(payload: &[u8], pointer: &mut usize, bitmap_defn: &F
             decode_ascii_bitmap(raw_bitmap, *size)?
         },
         _ => {
-            return Err(Iso8583TokeniseError::InvalidFieldDefinition)
+            return Err(Iso8583ParseError::InvalidFieldDefinition)
         }
     };
 
     Ok(bitmap)
 }
 
-pub fn tokenise_next_field(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u16, Field>, field_num: &u16) -> Result<String, Iso8583TokeniseError> {
+pub fn tokenise_next_field(payload: &[u8], pointer: &mut usize, mti_spec: &HashMap<u16, Field>, field_num: &u16) -> Result<String, Iso8583ParseError> {
     let field = mti_spec.get(field_num)
-        .ok_or(Iso8583TokeniseError::NoTokenDefinition)?;
+        .ok_or(Iso8583ParseError::NoTokenDefinition)?;
     
     let field_size = get_field_length(payload, pointer, field)?;
 
     let field_value_raw = tokenise_next_bytes(payload, pointer, field_size)?;
 
     let field_value = str::from_utf8(field_value_raw)
-        .map_err(|_err| Iso8583TokeniseError::InvalidData(Vec::from(field_value_raw)))?
+        .map_err(|_err| Iso8583ParseError::InvalidData(Vec::from(field_value_raw)))?
         .to_string();
 
     Ok(field_value)
 }
 
-pub fn tokenise_next_bytes<'a>(payload: &'a[u8], pointer: &mut usize, size: usize) -> Result<&'a [u8], Iso8583TokeniseError> {
+pub fn tokenise_next_bytes<'a>(payload: &'a[u8], pointer: &mut usize, size: usize) -> Result<&'a [u8], Iso8583ParseError> {
     if *pointer + size > payload.len() {
-        return Err(Iso8583TokeniseError::Overflow{
+        return Err(Iso8583ParseError::Overflow{
             from: *pointer,
             count: size,
             max: payload.len(),
@@ -113,15 +111,15 @@ pub fn tokenise_next_bytes<'a>(payload: &'a[u8], pointer: &mut usize, size: usiz
     Ok(result)
 }
 
-fn get_field_length(payload: &[u8], pointer: &mut usize, field: &Field) -> Result<usize, Iso8583TokeniseError> {
+fn get_field_length(payload: &[u8], pointer: &mut usize, field: &Field) -> Result<usize, Iso8583ParseError> {
     let field_length = match field.ftype.var_size_len() {
         Some(field_size_len) => {
             let field_size_str = tokenise_next_bytes(payload, pointer, field_size_len)?;
             // TODO use a simpler, more efficient (maybe handwritten?) process
             str::from_utf8(field_size_str)
-                .map_err(|_err| Iso8583TokeniseError::InvalidData(Vec::from(field_size_str)))?
+                .map_err(|_err| Iso8583ParseError::InvalidData(Vec::from(field_size_str)))?
                 .parse::<usize>()
-                .map_err(|_err| Iso8583TokeniseError::InvalidVarLength(byte_to_string(field_size_str)))?
+                .map_err(|_err| Iso8583ParseError::InvalidVarLength(byte_to_string(field_size_str)))?
         }
         None => field.size,
     };
@@ -208,7 +206,7 @@ mod test {
                     fn $name() {
                         let mut pointer = $from;
                         let result = tokenise_next_bytes($payload.as_bytes(), &mut pointer, $size);
-                        assert_eq!(Err(Iso8583TokeniseError::Overflow{
+                        assert_eq!(Err(Iso8583ParseError::Overflow{
                             from: $from,
                             count: $size,
                             max: $payload.len(),

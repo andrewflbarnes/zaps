@@ -10,7 +10,7 @@ use tokio::{
 use zaps::{
     iso8583_spec_build,
     iso8583::spec::Spec,
-    core::Tokeniser,
+    core::Parser,
 };
 
 pub fn iso8583_spec() -> Spec {
@@ -22,10 +22,11 @@ pub fn iso8583_spec() -> Spec {
     )
 }
 
-pub async fn serve<T>(engine: T)
+pub async fn serve<K, T>(engine: T)
 where
-    T: 'static + Tokeniser + Send + Sync,
-    <T as Tokeniser>::Err: std::fmt::Debug,
+    T: 'static + Parser<K> + Send + Sync,
+    <T as Parser<K>>::Err: std::fmt::Debug,
+    K: std::fmt::Debug,
 {
     let engine = Arc::new(engine);
     let listen_addr = "localhost:9090";

@@ -1,5 +1,2 @@
-mod tokenise;
-
-pub use tokenise::{
-    Tokeniser,
-};
+mod parser;
+pub use parser::Parser;

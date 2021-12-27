@@ -1,5 +1,5 @@
 use zaps::{
-    core::Tokeniser,
+    core::Parser,
     iso8583::{
         Iso8583Engine,
         spec::{

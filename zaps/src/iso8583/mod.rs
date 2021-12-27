@@ -3,8 +3,8 @@ mod engine;
 pub use engine::{
     Iso8583Engine,
 };
-pub mod spec;
-mod tokenise;
-pub use tokenise::{
-    Iso8583TokeniseError,
+mod parse;
+pub use parse::{
+    Iso8583ParseError,
 };
+pub mod spec;
